@@ -60,26 +60,6 @@ helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 helm upgrade --install argocd --wait -n argocd --create-namespace argo/argo-cd
 
-kubectl create ns bitwarden
-
-cat << EOF | kubectl apply -f-
-apiVersion: v1
-stringData:
-  BW_CLIENTID: "$bitwardenClientId"
-  BW_CLIENTSECRET: "$bitwardenClientSecret"
-  BW_HOST: "$bitwardenHost"
-  BW_PASSWORD: "$bitwardenPassword"
-kind: Secret
-metadata:
-  name: bitwarden-cli
-  namespace: bitwarden
-type: Opaque
-EOF
-
 kubectl wait --for condition=ready pod --namespace argocd --all --timeout 300s
 
-helm upgrade --install -n argocd argocd-apps -f argocd/platform/values/argocd-apps.yaml argo/argocd-apps
-
-kubectl create ns crossplane-system
-
-#kubectl create secret generic aws-secret -n crossplane-system --from-file=creds=./aws-credentials.txt
+kubectl apply -f platform.yaml
