@@ -1,3 +1,6 @@
+source:
+  repoURL: https://github.com/irizzante/argocd-experiments.git
+  targetRevision: HEAD
 destination:
   namespace: kyverno
 valueFiles:
