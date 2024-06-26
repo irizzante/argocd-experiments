@@ -6,7 +6,7 @@ source:
 destination:
   namespace: kyverno
 valueFiles:
-  - $values/{{ .path.path }}/kyverno/values.yaml
+  - $values/{{ .path.path }}/values.yaml
 clusters:
   dev:
     enabled: true
