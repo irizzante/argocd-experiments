@@ -15,7 +15,7 @@ spec:
           repoURL: https://github.com/irizzante/argocd-experiments.git
           revision: HEAD
           files:
-          # Find all .argocd.json
+          # Find all .argocd.yaml
             - path: 'templatePatch/**/.argocd.yaml'
           values:
             # Add enabled field if clusters.${name}.enabled = true
@@ -40,9 +40,8 @@ spec:
         # Default revision is .source.targetRevision but can be overriden with clusters.${name}.chartRevision
         - repoURL: '{{ .source.repoURL }}'
           targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
-          chart: '{{ default "" .source.chart }}'
-          path: '{{ default "" .source.path }}'
           helm:
+            releaseName: '{{ .source.releaseName }}'
             ignoreMissingValueFiles: true
       destination:
         server: https://kubernetes.default.svc
@@ -53,24 +52,4 @@ spec:
         syncOptions:
           - ServerSideApply={{ dig "syncPolicy" "syncOptions" "ServerSideApply" "true" . }}
           - CreateNamespace={{ dig "syncPolicy" "syncOptions" "CreateNamespace" "true" . }}
-  #templatePatch: |
-  #  spec:
-  #    sources:
-  #      # First source is for value files
-  #      # Default revision is HEAD but can be overriden with clusters.${name}.valuesRevision
-  #      - repoURL: https://github.com/irizzante/argocd-experiments.git
-  #        targetRevision: '{{ dig "clusters" .name "valuesRevision" "HEAD" . }}'
-  #        ref: values
-  #      # Second source is for chart
-  #      # Default revision is .source.targetRevision but can be overriden with clusters.${name}.chartRevision
-  #      - repoURL: '{{ .source.repoURL }}'
-  #        targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
-  #        chart: '{{ default "" .source.chart }}'
-  #        path: '{{ default "" .source.path }}'
-  #        helm:
-  #          ignoreMissingValueFiles: true
-  #          valueFiles:
-  #          {{- range $valueFile := .valueFiles }}
-  #            - {{ $valueFile | toJson }}
-  #          {{- end }}
           
