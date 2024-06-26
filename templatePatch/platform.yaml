@@ -5,6 +5,7 @@ metadata:
   namespace: argocd
 spec:
   goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
   # Create a matrix generator that will install all chart in all clusters
   - matrix:
@@ -32,8 +33,8 @@ spec:
       project: default
       sources:
         # First source is for value files
-        # Default revision is HEAD but can be overriden with clusters.${name}.valuesRevision
         - repoURL: https://github.com/irizzante/argocd-experiments.git
+          # Default revision is HEAD but can be overriden with clusters.${name}.valuesRevision
           targetRevision: '{{ dig "clusters" .name "valuesRevision" "HEAD" . }}'
           ref: values
         # Second source is for chart
@@ -41,7 +42,7 @@ spec:
         - repoURL: '{{ .source.repoURL }}'
           targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
           helm:
-            releaseName: '{{ dig "source" .releaseName .path.basename . }}'
+            releaseName: '{{ default .path.basename .source.releaseName }}'
             ignoreMissingValueFiles: true
       destination:
         server: https://kubernetes.default.svc
