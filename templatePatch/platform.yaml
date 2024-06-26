@@ -60,6 +60,7 @@ spec:
           targetRevision: '{{ dig "clusters" .name "valuesRevision" "HEAD" . }}'
           ref: values
         - repoURL: '{{ .source.repoURL }}'
+          chart: '{{ dig "source" "chart" .path.basename . }}'
           targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
           helm:
             releaseName: '{{ dig "source" "releaseName" .path.basename . }}'
@@ -68,6 +69,3 @@ spec:
             {{- range $valueFile := .valueFiles }}
               - {{ $valueFile }}
             {{- end }}
-
-  
-          
