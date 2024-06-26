@@ -1,0 +1,13 @@
+destination:
+  namespace: kyverno
+valueFiles:
+  - $values/{{ .path.path }}/values.yaml
+clusters:
+  dev:
+    enabled: true
+  uat:
+    enabled: true
+  prod:
+    enabled: true
+  in-cluster:
+    enabled: true
