@@ -41,7 +41,7 @@ spec:
         - repoURL: '{{ .source.repoURL }}'
           targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
           helm:
-            releaseName: '{{ .source.releaseName }}'
+            releaseName: '{{ dig "source" .releaseName .path.basename . }}'
             ignoreMissingValueFiles: true
       destination:
         server: https://kubernetes.default.svc
