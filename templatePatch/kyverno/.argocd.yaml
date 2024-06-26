@@ -16,3 +16,5 @@ clusters:
     enabled: true
   in-cluster:
     enabled: true
+  "local cluster":
+    enabled: true
