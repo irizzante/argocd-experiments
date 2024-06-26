@@ -26,6 +26,7 @@ spec:
       matchLabels:
         # Keep only the one which field enabled=true
         enabled: "true"
+        
   template:
     metadata:
       name: '{{ .path.basename }}'
