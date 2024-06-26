@@ -41,7 +41,7 @@ spec:
           - ServerSideApply={{ dig "syncPolicy" "syncOptions" "ServerSideApply" "true" . }}
           - CreateNamespace={{ dig "syncPolicy" "syncOptions" "CreateNamespace" "true" . }}
   templatePatch: |
-    {{ if .annotations }}
+    {{ if (dig "annotations" false .) }}
     metadata:
       annotations:
         {{- range $key, $value := .annotations }}
