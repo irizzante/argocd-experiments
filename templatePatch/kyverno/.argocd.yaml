@@ -16,3 +16,5 @@ clusters:
     enabled: true
   local:
     enabled: true
+  anotherone:
+    enabled: true
