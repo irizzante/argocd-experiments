@@ -42,7 +42,7 @@ spec:
         - repoURL: '{{ .source.repoURL }}'
           targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
           helm:
-            releaseName: '{{ default .path.basename .source.releaseName }}'
+            releaseName: '{{ dig "source" "releaseName" .path.basename . }}'
             ignoreMissingValueFiles: true
       destination:
         server: https://kubernetes.default.svc
@@ -53,4 +53,25 @@ spec:
         syncOptions:
           - ServerSideApply={{ dig "syncPolicy" "syncOptions" "ServerSideApply" "true" . }}
           - CreateNamespace={{ dig "syncPolicy" "syncOptions" "CreateNamespace" "true" . }}
+  templatePatch: |
+    spec:
+      sources:
+        # First source is for value files
+        - repoURL: https://github.com/irizzante/argocd-experiments.git
+          # Default revision is HEAD but can be overriden with clusters.${name}.valuesRevision
+          targetRevision: '{{ dig "clusters" .name "valuesRevision" "HEAD" . }}'
+          ref: values
+        # Second source is for chart
+        # Default revision is .source.targetRevision but can be overriden with clusters.${name}.chartRevision
+        - repoURL: '{{ .source.repoURL }}'
+          targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
+          helm:
+            releaseName: '{{ dig "source" "releaseName" .path.basename . }}'
+            ignoreMissingValueFiles: true
+            valueFiles:
+            {{- range $valueFile := .valueFiles }}
+              - {{ $valueFile }}
+            {{- end }}
+
+  
           

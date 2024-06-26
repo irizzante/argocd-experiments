@@ -14,4 +14,4 @@ clusters:
   prod:
     enabled: true
   in-cluster:
-    enabled: false
+    enabled: true
