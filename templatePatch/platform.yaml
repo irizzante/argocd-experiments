@@ -56,8 +56,21 @@ spec:
   templatePatch: |
     spec:
       sources:
-        helm:
-          valueFiles:
-          {{- range $valueFile := .valueFiles }}
-            - {{ $valueFile | toJson }}
-          {{- end }}
+        # First source is for value files
+        # Default revision is HEAD but can be overriden with clusters.${name}.valuesRevision
+        - repoURL: https://github.com/irizzante/argocd-experiments.git
+          targetRevision: '{{ dig "clusters" .name "valuesRevision" "HEAD" . }}'
+          ref: values
+        # Second source is for chart
+        # Default revision is .source.targetRevision but can be overriden with clusters.${name}.chartRevision
+        - repoURL: '{{ .source.repoURL }}'
+          targetRevision: '{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'
+          chart: '{{ default "" .source.chart }}'
+          path: '{{ default "" .source.path }}'
+          helm:
+            ignoreMissingValueFiles: true
+            valueFiles:
+            {{- range $valueFile := .valueFiles }}
+              - {{ $valueFile | toJson }}
+            {{- end }}
+          
