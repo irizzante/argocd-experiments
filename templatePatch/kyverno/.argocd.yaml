@@ -5,7 +5,7 @@ source:
 destination:
   namespace: kyverno
 valueFiles:
-  - $values/{{ .path.path }}/values.yaml
+  - $values/templatePatch/kyverno/values.yaml
 clusters:
   dev:
     enabled: true
