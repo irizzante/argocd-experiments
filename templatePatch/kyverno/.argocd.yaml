@@ -1,5 +1,3 @@
-annotations:
-  argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
 source:
   repoURL: https://kyverno.github.io/kyverno
   targetRevision: "2.7.0"
@@ -8,7 +6,7 @@ source:
 destination:
   namespace: kyverno
 valueFiles:
-  - $values/templatePatch/kyverno/values.yaml
+  - $values/{{ .path.path }}/kyverno/values.yaml
 clusters:
   dev:
     enabled: true
