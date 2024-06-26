@@ -55,7 +55,7 @@ spec:
           - CreateNamespace={{ dig "syncPolicy" "syncOptions" "CreateNamespace" "true" . }}
   templatePatch: |
     spec:
-      source:
+      sources:
         helm:
           valueFiles:
           {{- range $valueFile := .valueFiles }}
