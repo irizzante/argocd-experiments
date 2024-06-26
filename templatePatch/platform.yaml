@@ -17,7 +17,7 @@ spec:
           revision: HEAD
           files:
           # Find all .argocd.yaml
-            - path: 'templatePatch/**/.argocd.yaml'
+            - path: 'templatePatch/**/argocd.yaml'
           values:
             # Add enabled field if clusters.${name}.enabled = true
             # name comes from the cluster generator
