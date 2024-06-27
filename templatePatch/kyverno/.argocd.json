@@ -23,6 +23,9 @@
     },
     "local": {
       "enabled": true
+    },
+    "anotherone": {
+      "enabled": true
     }
   }
 }
