@@ -11,10 +11,10 @@ spec:
       generators:
       - clusters: {}
       - git:
-          repoURL: 'https://github.com/irizzante/argocd-experiments.git'
+          repoURL: '{{.metadata.annotations.addons_repo_url}}'
           revision: 'HEAD'
           directories:
-            - path: 'parameters-in-selector/apps/*/envs/*'
+            - path: '{{.metadata.annotations.addons_repo_basepath}}/apps/*/envs/*'
         
   template:
     metadata:
@@ -30,6 +30,7 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+          - ServerSideApply=true
   templatePatch: |
     spec:
       sources:
