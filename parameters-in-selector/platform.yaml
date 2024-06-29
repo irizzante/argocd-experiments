@@ -17,9 +17,10 @@ spec:
           revision: '{{.metadata.annotations.addons_repo_revision}}'
           directories:
             - path: '{{.metadata.annotations.addons_repo_basepath}}/apps/*/envs/*'
-    selector:
-      matchExpressions:
-        - {key: 'environment', operator: In, values: ['{{.values.environment}}']}
+    # This does not work yet
+    #selector:
+    #  matchExpressions:
+    #    - {key: '{{.metadata.labels.environment}}', operator: In, values: ['{{.values.environment}}']}
         
   template:
     metadata:
@@ -52,3 +53,6 @@ spec:
               - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/base/values.yaml
               - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/envs/{{.path.basename}}/values.yaml
               - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/clusters/{{.name}}/values.yaml
+            values: |
+              # Debug environment value
+              debugEnvironment: '{{.values.environment}}'
