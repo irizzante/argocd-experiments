@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - matrix:
+      generators:
+      # git generator, 'child' #1
+      - git:
+          repoURL: 'https://github.com/irizzante/argocd-experiments.git'
+          revision: 'HEAD'
+          directories:
+            - path: 'parameters-in-selector/apps/*/envs/*'
+      # cluster generator, 'child' #2
+      - clusters:
+          selector:
+            matchExpressions:
+            - {key: 'environment', operator: In, values: ['{{.metadata.labels.environment}}']}
+        
+  template:
+    metadata:
+      name: 'addon-{{.name}}-{{index .path.segments 2}}'
+    spec:
+      project: default
+      destination:
+        server: '{{.name}}'
+        namespace: '{{index .path.segments 2}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+  templatePatch: |
+    spec:
+      sources:
+        - repoURL: https://github.com/irizzante/argocd-experiments.git
+          targetRevision: '{{.metadata.annotations.addons_repo_revision}}'
+          ref: values
+        - repoURL: 'https://kyverno.github.io/kyverno'
+          chart: 'kyverno'
+          targetRevision: '2.7.0'
+          helm:
+            releaseName: 'kyverno'
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/base/values.yaml
+              - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/envs/{{.path.basename}}/values.yaml
+              - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/clusters/{{.name}}/values.yaml
+            values: |
+              myValue: {{ .values.enabled }}
