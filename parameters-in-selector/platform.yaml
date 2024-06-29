@@ -9,17 +9,12 @@ spec:
   generators:
   - matrix:
       generators:
-      # git generator, 'child' #1
+      - clusters: {}
       - git:
           repoURL: 'https://github.com/irizzante/argocd-experiments.git'
           revision: 'HEAD'
           directories:
             - path: 'parameters-in-selector/apps/*/envs/*'
-      # cluster generator, 'child' #2
-      - clusters:
-          selector:
-            matchExpressions:
-            - {key: 'environment', operator: In, values: ['{{.metadata.labels.environment}}']}
         
   template:
     metadata:
@@ -51,5 +46,3 @@ spec:
               - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/base/values.yaml
               - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/envs/{{.path.basename}}/values.yaml
               - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/clusters/{{.name}}/values.yaml
-            values: |
-              myValue: {{ .values.enabled }}
