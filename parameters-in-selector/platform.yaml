@@ -9,12 +9,17 @@ spec:
   generators:
   - matrix:
       generators:
-      - clusters: {}
+      - clusters:
+          values:
+            environment: '{{.metadata.labels.environment}}'
       - git:
           repoURL: '{{.metadata.annotations.addons_repo_url}}'
           revision: 'HEAD'
           directories:
             - path: '{{.metadata.annotations.addons_repo_basepath}}/apps/*/envs/*'
+        selector:
+          matchExpressions:
+            - {key: 'environment', operator: In, values: ['{{.environment}}']}
         
   template:
     metadata:
