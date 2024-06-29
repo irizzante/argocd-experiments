@@ -72,7 +72,12 @@ kind: Secret
 metadata:
   labels:
     argocd.argoproj.io/secret-type: cluster
+    environment: management
+  annotations:
+    addons_repo_basepath: parameters-in-selector
+    addons_repo_url: https://github.com/irizzante/argocd-experiments
+    addons_repo_revision: HEAD
   name: in-cluster
   namespace: argocd
 type: Opaque
-EOF                                                                                                                                                                                                                                                                                                                       
+EOF
