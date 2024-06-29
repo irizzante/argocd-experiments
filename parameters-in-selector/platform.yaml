@@ -12,7 +12,7 @@ spec:
       - clusters: {}
       - git:
           repoURL: '{{.metadata.annotations.addons_repo_url}}'
-          revision: 'HEAD'
+          revision: '{{.metadata.annotations.addons_repo_revision}}'
           directories:
             - path: '{{.metadata.annotations.addons_repo_basepath}}/apps/*/envs/*'
         
