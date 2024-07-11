@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:  
+  - matrix:
+      generators:
+        - matrix:
+            generators:
+              - clusters: {}
+              - git:
+                  repoURL: '{{.metadata.annotations.addons_repo_url}}'
+                  revision: '{{.metadata.annotations.addons_repo_revision}}'
+                  directories:
+                  - path: '{{.metadata.annotations.addons_repo_basepath}}/apps/*/envs/*'
+        - list:
+            elements:
+              - environment: '{{.metadata.labels.environment}}'
+      #- clusters:
+      #    values:
+      #      environment: '{{.metadata.labels.environment}}'
+      #- git:
+      #    repoURL: '{{.metadata.annotations.addons_repo_url}}'
+      #    revision: '{{.metadata.annotations.addons_repo_revision}}'
+      #    directories:
+      #      - path: '{{.metadata.annotations.addons_repo_basepath}}/apps/*/envs/*'
+    selector:
+      matchLabels:
+        environment: '{{.path.basename}}'        
+  template:
+    metadata:
+      name: 'addon-{{.name}}-{{index .path.segments 2}}'
+    spec:
+      project: default
+      destination:
+        name: '{{.name}}'
+        namespace: '{{index .path.segments 2}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+      sources:
+        - repoURL: https://github.com/irizzante/argocd-experiments.git
+          targetRevision: '{{.metadata.annotations.addons_repo_revision}}'
+          ref: values
+        - repoURL: 'https://kyverno.github.io/kyverno'
+          chart: 'kyverno'
+          targetRevision: '2.7.0'
+          helm:
+            releaseName: 'kyverno'
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/base/values.yaml
+              - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/envs/{{.path.basename}}/values.yaml
+              - $values/{{.metadata.annotations.addons_repo_basepath}}/apps/{{index .path.segments 2}}/clusters/{{.name}}/values.yaml
+  
+            
