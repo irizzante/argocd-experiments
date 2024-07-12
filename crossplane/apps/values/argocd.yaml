@@ -164,7 +164,22 @@ configs:
             "ProviderConfig",
             "ProviderConfigUsage"
           }
+
+          local function isTableEmpty(t)
+            if t == nil then return true end  -- Controlla se la tabella è nil
+            for _, _ in pairs(t) do
+              return false -- Se c'è almeno un elemento, la tabella non è vuota
+            end
+            return true -- Se il ciclo termina senza trovare elementi, la tabella è vuota
+          end
+
           if obj.status == nil and contains(has_no_status, obj.kind) then
+              health_status.status = "Healthy"
+              health_status.message = "Resource is up-to-date."
+            return health_status
+          end
+
+          if obj.status ~= nil and isTableEmpty(obj.status) and contains(has_no_status, obj.kind) then
               health_status.status = "Healthy"
               health_status.message = "Resource is up-to-date."
             return health_status
