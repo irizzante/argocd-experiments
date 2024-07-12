@@ -12,8 +12,6 @@ apiVersion: pkg.crossplane.io/v1beta1
 kind: DeploymentRuntimeConfig
 metadata:
   name: provider-helm
-  annotations:
-      argocd.argoproj.io/sync-wave: "-5"
 spec:
   serviceAccountTemplate:
     metadata:
@@ -23,8 +21,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: provider-helm-cluster-admin
-  annotations:
-      argocd.argoproj.io/sync-wave: "-5"
 subjects:
   - kind: ServiceAccount
     name: provider-helm
