@@ -160,7 +160,9 @@ configs:
             "Composition",
             "CompositionRevision",
             "DeploymentRuntimeConfig",
-            "ControllerConfig"
+            "ControllerConfig",
+            "ProviderConfig",
+            "ProviderConfigUsage"
           }
           if obj.status == nil and contains(has_no_status, obj.kind) then
               health_status.status = "Healthy"
