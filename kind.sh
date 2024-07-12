@@ -62,7 +62,7 @@ helm upgrade --install argocd --wait -n argocd --create-namespace argo/argo-cd
 
 echo ArgoCD initial password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
-cat << EOF | k -n argocd apply -f -
+cat << EOF | kubectl -n argocd apply -f -
 apiVersion: v1
 data:
   config: eyJ0bHNDbGllbnRDb25maWciOnsiaW5zZWN1cmUiOmZhbHNlfX0=
