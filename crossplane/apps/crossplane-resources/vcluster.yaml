@@ -1,0 +1,303 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xvclusters.irizzant.it
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: irizzant.it/v1alpha1
+    kind: XVCluster
+
+  resources:
+    - name: vcluster-helm-release
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: Release
+        metadata:
+          name: #patched
+          annotations:
+            crossplane.io/external-name: # patched
+        spec:
+          rollbackLimit: 3
+          providerConfigRef:
+            name: helm-provider
+          forProvider:
+            namespace: #patched
+            chart:
+              name: vcluster
+              repository: https://charts.loft.sh
+              version: "0.19.0"
+            values:
+              vcluster:
+                image: #patched
+              ingress:
+                enabled: true
+                ingressClassName: nginx
+                host: #patched
+              isolation:
+                enabled: true
+                limitRange:
+                  enabled: true
+                  default:
+                    ephemeral-storage: 8Gi
+                    memory: 4Gi
+                    cpu: "4"
+                  defaultRequest:
+                    ephemeral-storage: 3Gi
+                    memory: 128Mi
+                    cpu: 100m
+              sync:
+                nodes:
+                  enabled: true
+                  syncAllNodes: true
+                persistentvolumes:
+                  enabled: true
+                ingresses:
+                  enabled: true
+              syncer:
+                extraArgs: [] # patched
+          writeConnectionSecretToRef:
+            name: # patched
+            namespace: crossplane-system
+          connectionDetails:
+          - apiVersion: v1
+            kind: Secret
+            name: # patched
+            namespace: # patched
+            fieldPath: data.config
+            toConnectionSecretKey: config
+            skipPartOfReleaseCheck: true
+      patches:
+        - fromFieldPath: spec.id
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vcluster"
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vcluster"
+        - fromFieldPath: spec.kubernetesVersion
+          toFieldPath: spec.forProvider.values.vcluster.image
+          transforms:
+            - type: string
+              string:
+                fmt: "rancher/k3s:%s-k3s1"
+        - fromFieldPath: spec.id
+          toFieldPath: metadata.annotations[crossplane.io/external-name]
+          policy:
+            fromFieldPath: Required
+        - type: CombineFromComposite
+          policy:
+            fromFieldPath: Required
+          toFieldPath: spec.forProvider.values.syncer.extraArgs[0]
+          combine:
+            variables:
+              - fromFieldPath: spec.id
+              - fromFieldPath: spec.hostDomain
+            strategy: string
+            string:
+              fmt: "--out-kube-config-server=https://%s.%s"
+        - type: CombineFromComposite
+          policy:
+            fromFieldPath: Required
+          toFieldPath: spec.forProvider.values.syncer.extraArgs[1]
+          combine:
+            variables:
+              - fromFieldPath: spec.id
+              - fromFieldPath: spec.id
+            strategy: string
+            string:
+              fmt: "--tls-san=%s.%s-vcluster.svc.cluster.local"
+        - type: CombineFromComposite
+          policy:
+            fromFieldPath: Required
+          toFieldPath: spec.forProvider.values.syncer.extraArgs[2]
+          combine:
+            variables:
+              - fromFieldPath: spec.id
+              - fromFieldPath: spec.hostDomain
+            strategy: string
+            string:
+              fmt: "--tls-san=%s.%s"
+        - fromFieldPath: spec.id
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "vc-%s"
+        - fromFieldPath: spec.id
+          toFieldPath: spec.connectionDetails[0].name
+          transforms:
+            - type: string
+              string:
+                fmt: "vc-%s"
+        - fromFieldPath: spec.id
+          toFieldPath: spec.connectionDetails[0].namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vcluster"
+        - type: CombineFromComposite
+          policy:
+            fromFieldPath: Required
+          toFieldPath: spec.forProvider.values.ingress.host
+          combine:
+            variables:
+              - fromFieldPath: spec.id
+              - fromFieldPath: spec.hostDomain
+            strategy: string
+            string:
+              fmt: "%s.%s"
+
+    - name: helm-provider-vcluster
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: ProviderConfig
+        metadata:
+          name: #patched
+        spec:
+          credentials:
+            source: Secret
+            secretRef:
+              namespace: #patched
+              key: config
+              name: #patched
+
+      patches:
+        - fromFieldPath: spec.id
+          toFieldPath: metadata.name
+        - fromFieldPath: spec.id
+          toFieldPath: spec.credentials.secretRef.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vcluster"
+        # This ProviderConfig uses the above VCluster's connection secret as
+        # its credentials secret.
+        - fromFieldPath: spec.id
+          toFieldPath: spec.credentials.secretRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "vc-%s"
+      readinessChecks:
+        - type: None
+
+    - name: k8s-provider-vcluster
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: ProviderConfig
+        metadata:
+          name: #patched
+        spec:
+          credentials:
+            source: Secret
+            secretRef:
+              namespace: #patched
+              key: config
+              name: #patched
+
+      patches:
+        - fromFieldPath: spec.id
+          toFieldPath: metadata.name
+        - fromFieldPath: spec.id
+          toFieldPath: spec.credentials.secretRef.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-vcluster"
+        # This ProviderConfig uses the above VCluster's connection secret as
+        # its credentials secret.
+        - fromFieldPath: spec.id
+          toFieldPath: spec.credentials.secretRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "vc-%s"
+      readinessChecks:
+        - type: None
+    
+    - name: argocd-cluster-secret
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        metadata:
+          name: #patched
+        spec:
+          providerConfigRef: 
+            name: kubernetes-provider
+          forProvider:
+            manifest:
+              apiVersion: external-secrets.io/v1beta1
+              kind: ExternalSecret
+              metadata:
+                name: #patched
+                namespace: argocd
+              spec:
+                refreshInterval: 5m
+                secretStoreRef:
+                  kind: SecretStore
+                  name: k8s-store-sa-auth
+                target:
+                  name: #patched
+                  # this is how the Kind=Secret will look like
+                  template:
+                    engineVersion: v2
+                    metadata:
+                      labels:
+                        argocd.argoproj.io/secret-type: cluster
+                    data:
+                      name: #patched
+                      server: '{{ (index (.data | fromYaml).clusters 0 "cluster" "server") }}'
+                      config: |
+                        {
+                          "tlsClientConfig": {
+                            "insecure": false,
+                            "caData": "{{ (index (.data | fromYaml).clusters 0 "cluster" "certificate-authority-data") }}",
+                            "certData": "{{ (index (.data | fromYaml).users 0 "user" "client-certificate-data") }}",
+                            "keyData": "{{ (index (.data | fromYaml).users 0 "user" "client-key-data") }}"
+                          }
+                        }
+                data:
+                - secretKey: data
+                  remoteRef:
+                    key: #patched
+                    property: config
+
+      patches:
+      - fromFieldPath: spec.id
+        toFieldPath: metadata.name
+        transforms:
+            - type: string
+              string:
+                fmt: "%s-argocd-cluster-credentials"
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.manifest.metadata.name
+        transforms:
+            - type: string
+              string:
+                fmt: "%s-argocd-cluster-credentials"  
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.manifest.spec.target.name
+        transforms:
+            - type: string
+              string:
+                fmt: "%s-argocd-cluster-credentials"
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.manifest.spec.target.template.data.name
+        transforms:
+            - type: string
+              string:
+                fmt: "%s"
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.manifest.spec.data[0].remoteRef.key
+        transforms:
+            - type: string
+              string:
+                fmt: "vc-%s"
+        
+  

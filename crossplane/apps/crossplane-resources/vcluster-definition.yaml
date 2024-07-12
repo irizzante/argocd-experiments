@@ -1,0 +1,42 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xvclusters.irizzant.it
+spec:
+  group: irizzant.it
+  names:
+    kind: XVCluster
+    plural: xvclusters
+  claimNames:
+    kind: VCluster
+    plural: vclusters
+  connectionSecretKeys:
+    - config
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: ID of this VCluster, used as reference by other objects
+                kubernetesVersion:
+                  type: string
+                  description: Kubernetes version to use
+                  default: v1.27.3
+                hostDomain:
+                  type: string
+                  description: Host cluster domain
+                team:
+                  type: string
+                  description: The team this cluster belongs to
+              required:
+                - id
+                - hostDomain
+                - team

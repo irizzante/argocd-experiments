@@ -1,0 +1,43 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xapps.irizzant.it
+spec:
+  group: irizzant.it
+  names:
+    kind: XApp
+    plural: xapps
+  claimNames:
+    kind: App
+    plural: apps
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              id:
+                type: string
+                description: App id
+              language:
+                type: string
+                enum:
+                - Java
+                - Python
+                description: Programming language
+              cluster:
+                type: string
+                description: ID of the cluster to deploy the app to
+              team:
+                type: string
+                description: Team the app belongs to
+            required:
+            - id
+            - language
+            - cluster
+            - team

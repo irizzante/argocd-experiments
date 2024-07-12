@@ -1,0 +1,201 @@
+controller:
+  env:
+    - name: ARGOCD_K8S_CLIENT_QPS
+      value: "300"
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: true
+  replicas: 1
+
+server:
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    hostname: argocd.localtest.me
+    ingressClassName: nginx
+    
+repoServer:
+  extraContainers:
+  - name: cmp-tanka
+    image: curlimages/curl
+    command: ['sh', '-c', 'curl -Lo /home/argocd/cmp-server/plugins/jb https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.5.1/jb-linux-amd64 && curl -Lo /home/argocd/cmp-server/plugins/tk https://github.com/grafana/tanka/releases/download/v0.25.0/tk-linux-amd64 && chmod +x /home/argocd/cmp-server/plugins/jb && chmod +x /home/argocd/cmp-server/plugins/tk && /var/run/argocd/argocd-cmp-server']  
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 999
+    volumeMounts:
+    - mountPath: /var/run/argocd
+      name: var-files
+    - mountPath: /home/argocd/cmp-server/plugins
+      name: plugins
+    - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+      subPath: tanka.yaml
+      name: argocd-cmp-cm
+    - mountPath: /tmp
+      name: cmp-tmp
+
+  volumes:
+  - name: argocd-cmp-cm
+    configMap:
+      name: argocd-cmp-cm
+  - name: cmp-tmp
+    emptyDir: {}
+
+configs:
+  secret:
+    argocdServerAdminPassword: $2a$10$0h4jFMDVAAKDRuumxsc1nOJF2vHB2DM/f8ZJPzVQt0iuw3optsiXi
+  cmp:
+    create: true
+    plugins:
+      tanka:
+        version: v1.0
+        init:
+          command: ['sh', '-c', '/home/argocd/cmp-server/plugins/jb install']
+        generate:
+          command:  [ 'sh', '-c', '/home/argocd/cmp-server/plugins/tk show environments/${ARGOCD_ENV_TK_ENV} ${ARGOCD_ENV_TK_EXTRA_ARGS} --dangerous-allow-redirect']
+        discover:
+          fileName: "**/k.libsonnet"
+
+  cm:
+    application.resourceTrackingMethod: annotation
+    resource.customizations: |
+      argoproj.io/Application:
+        health.lua: |
+          health_status = {}
+          health_status.status = "Progressing"
+          health_status.message = ""
+          if obj.status ~= nil then
+            if obj.status.health ~= nil then
+              health_status.status = obj.status.health.status
+              if obj.status.health.message ~= nil then
+                health_status.message = obj.status.health.message
+              end
+            end
+          end
+          return health_status
+
+      "*.upbound.io/*":
+        health.lua: |
+          health_status = {
+            status = "Progressing",
+            message = "Provisioning ..."
+          }
+
+          local function contains (table, val)
+            for i, v in ipairs(table) do
+              if v == val then
+                return true
+              end
+            end
+            return false
+          end
+
+          local has_no_status = {
+            "ProviderConfig",
+            "ProviderConfigUsage"
+          }
+
+          if obj.status == nil and contains(has_no_status, obj.kind) then
+            health_status.status = "Healthy"
+            health_status.message = "Resource is up-to-date."
+            return health_status
+          end
+
+          if obj.status == nil or obj.status.conditions == nil then
+            if obj.kind == "ProviderConfig" and obj.status.users ~= nil then
+              health_status.status = "Healthy"
+              health_status.message = "Resource is in use."
+              return health_status
+            end
+            return health_status
+          end
+
+          for i, condition in ipairs(obj.status.conditions) do
+            if condition.type == "LastAsyncOperation" then
+              if condition.status == "False" then
+                health_status.status = "Degraded"
+                health_status.message = condition.message
+                return health_status
+              end
+            end
+
+            if condition.type == "Synced" then
+              if condition.status == "False" then
+                health_status.status = "Degraded"
+                health_status.message = condition.message
+                return health_status
+              end
+            end
+
+            if condition.type == "Ready" then
+              if condition.status == "True" then
+                health_status.status = "Healthy"
+                health_status.message = "Resource is up-to-date."
+                return health_status
+              end
+            end
+          end
+
+          return health_status
+
+      "*.crossplane.io/*":
+        health.lua: |
+          health_status = {
+            status = "Progressing",
+            message = "Provisioning ..."
+          }
+
+          local function contains (table, val)
+            for i, v in ipairs(table) do
+              if v == val then
+                return true
+              end
+            end
+            return false
+          end
+
+          local has_no_status = {
+            "Composition",
+            "CompositionRevision",
+            "DeploymentRuntimeConfig",
+            "ControllerConfig"
+          }
+          if obj.status == nil and contains(has_no_status, obj.kind) then
+              health_status.status = "Healthy"
+              health_status.message = "Resource is up-to-date."
+            return health_status
+          end
+
+          if obj.status == nil or obj.status.conditions == nil then
+            return health_status
+          end
+
+          for i, condition in ipairs(obj.status.conditions) do
+            if condition.type == "LastAsyncOperation" then
+              if condition.status == "False" then
+                health_status.status = "Degraded"
+                health_status.message = condition.message
+                return health_status
+              end
+            end
+
+            if condition.type == "Synced" then
+              if condition.status == "False" then
+                health_status.status = "Degraded"
+                health_status.message = condition.message
+                return health_status
+              end
+            end
+
+            if contains({"Ready", "Healthy", "Offered", "Established"}, condition.type) then
+              if condition.status == "True" then
+                health_status.status = "Healthy"
+                health_status.message = "Resource is up-to-date."
+                return health_status
+              end
+            end
+          end
+
+          return health_status

@@ -1,0 +1,48 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xgitops.irizzant.it
+spec:
+  group: irizzant.it
+  names:
+    kind: XGitOps
+    plural: xgitops
+  claimNames:
+    kind: GitOps
+    plural: gitops
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              gitOpsRepo:
+                type: string
+                description: URL of the Git repo for GitOps
+              gitOpsPath:
+                type: string
+                description: Path for GitOps
+              gitOpsSecret:
+                type: string
+                description: Name of the secret in the host cluster to replicate in the VCluster. Can be used to configure a ClusterStore for external-secrets
+              providerConfigName:
+                type: object
+                properties:
+                  helm:
+                    type: string
+                  kubernetes:
+                    type: string
+                description: Name of a ProviderConfig to use
+                required:
+                  - helm
+                  - kubernetes
+            required:
+            - providerConfigName
+            - gitOpsRepo
+            - gitOpsPath
+            - gitOpsSecret

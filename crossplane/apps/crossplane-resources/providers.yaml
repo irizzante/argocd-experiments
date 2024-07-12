@@ -1,0 +1,30 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-github
+  annotations:
+      argocd.argoproj.io/sync-wave: "-5"
+spec:
+  package: xpkg.upbound.io/coopnorge/provider-github:v0.3.2
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-kubernetes
+  annotations:
+      argocd.argoproj.io/sync-wave: "-5"
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.14.0
+  runtimeConfigRef:
+    apiVersion: pkg.crossplane.io/v1beta1
+    kind: DeploymentRuntimeConfig
+    name: provider-kubernetes
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-helm
+  annotations:
+      argocd.argoproj.io/sync-wave: "-5"
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.19.0

@@ -1,0 +1,130 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xapps.irizzant.it
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: irizzant.it/v1alpha1
+    kind: XApp
+  resources:
+    - name: github-repo
+      base:
+        apiVersion: repo.github.upbound.io/v1alpha1
+        kind: Repository
+        metadata:
+          name: #patched
+        spec:
+          providerConfigRef:
+            name: github-provider
+          forProvider:
+            visibility: public
+            gitignoreTemplate: #patched
+            template:
+            - owner: #patched
+              repository: #patched
+
+      patches:
+      - fromFieldPath: spec.id
+        toFieldPath: metadata.name
+      - fromFieldPath: spec.language
+        toFieldPath: spec.forProvider.gitignoreTemplate
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.language
+        toFieldPath: spec.forProvider.template[0].owner
+        transforms:
+        - type: map
+          map:
+            Java: microsoft
+            Python: microsoft
+      - fromFieldPath: spec.language
+        toFieldPath: spec.forProvider.template[0].repository
+        transforms:
+        - type: map
+          map:
+            Java: vscode-remote-try-java
+            Python: vscode-remote-try-python
+    
+    - name: argocd-directory
+      base:
+        apiVersion: repo.github.upbound.io/v1alpha1
+        kind: RepositoryFile
+        metadata:
+          name: #patched
+        spec:
+          providerConfigRef:
+            name: github-provider
+          forProvider:
+            overwriteOnCreate: true
+            content: |
+              Put your Kubernetes manifests here
+            file: argocd/README
+            repository: #patched
+
+      patches:
+      - fromFieldPath: spec.id
+        toFieldPath: metadata.name
+        transforms:
+        - type: string
+          string:
+            fmt: "%s-github-argocd-directory"
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.repository
+
+    - name: argocd-app
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        metadata:
+          name: #patched
+        spec:
+          providerConfigRef:
+            name: kubernetes-provider
+          forProvider:
+            manifest:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: #patched
+                namespace: argocd
+                finalizers:
+                  - resources-finalizer.argocd.argoproj.io
+              spec:
+                destination:
+                  name: #patched
+                  namespace: #patched
+                source:
+                  path: argocd
+                  repoURL: #patched
+                  targetRevision: HEAD
+                sources: []
+                project: default
+                syncPolicy:
+                  automated:
+                    prune: true
+                    selfHeal: true
+                    allowEmpty: true
+                  syncOptions:
+                    - CreateNamespace=true
+                    - PruneLast=true
+
+      patches:
+      - fromFieldPath: spec.id
+        toFieldPath: metadata.name
+        transforms:
+        - type: string
+          string:
+            fmt: "%s-argocd-app"
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.manifest.metadata.name
+      - fromFieldPath: spec.cluster
+        toFieldPath: spec.forProvider.manifest.spec.destination.name
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.manifest.spec.destination.namespace
+      - fromFieldPath: spec.id
+        toFieldPath: spec.forProvider.manifest.spec.source.repoURL
+        transforms:
+        - type: string
+          string:
+            fmt: "https://github.com/irizzante/%s.git"
+
