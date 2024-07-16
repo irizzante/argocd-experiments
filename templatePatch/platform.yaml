@@ -8,7 +8,8 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
   # Create a matrix generator that will install all chart in all clusters
-  - matrix:
+  - merge:
+      mergeKeys: ["server"]
       generators:
         # Get all clusters
       - clusters: {}
@@ -22,10 +23,10 @@ spec:
             # Add enabled field if clusters.${name}.enabled = true
             # name comes from the cluster generator
             enabled: '{{ dig "clusters" .name "enabled" true . }}'
-    selector:
-      matchLabels:
-        # Keep only the one which field enabled=true
-        enabled: "true"
+    #selector:
+    #  matchLabels:
+    #    # Keep only the one which field enabled=true
+    #    enabled: "true"
         
   template:
     metadata:

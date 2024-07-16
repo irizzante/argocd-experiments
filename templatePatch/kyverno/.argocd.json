@@ -21,10 +21,7 @@
     "prod": {
       "enabled": true
     },
-    "local": {
-      "enabled": true
-    },
-    "anotherone": {
+    "in-cluster": {
       "enabled": true
     }
   }
