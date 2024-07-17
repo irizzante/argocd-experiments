@@ -7,7 +7,7 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-  - cluster: {}
+  - clusters: {}
   template:
     metadata:
       name: 'addon-{{.name}}-kyverno'

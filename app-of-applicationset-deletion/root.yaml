@@ -10,7 +10,7 @@ spec:
     namespace: argocd
     server: 'https://kubernetes.default.svc'
   source:
-    path: app-of-applicationset-deletion
+    path: app-of-applicationset-deletion/appsets
     repoURL: 'https://github.com/irizzante/argocd-experiments.git'
     targetRevision: HEAD
   sources: []
