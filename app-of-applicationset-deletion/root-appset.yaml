@@ -4,8 +4,8 @@ metadata:
   name: root
   namespace: argocd
 spec:
-  goTemplate: true
-  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: false
   generators:
   - clusters: {}
   template:
@@ -13,6 +13,10 @@ spec:
       name: 'root'
     spec:
       project: default
+      source:
+        path: app-of-applicationset-deletion/appsets
+        repoURL: 'https://github.com/irizzante/argocd-experiments.git'
+        targetRevision: HEAD
       destination:
         name: '{{.name}}'
         namespace: 'argocd'
@@ -23,7 +27,3 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
-      source:
-        path: app-of-applicationset-deletion/appsets
-        repoURL: 'https://github.com/irizzante/argocd-experiments.git'
-        targetRevision: HEAD
