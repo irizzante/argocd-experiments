@@ -18,7 +18,7 @@ spec:
         repoURL: 'https://github.com/irizzante/argocd-experiments.git'
         targetRevision: HEAD
       destination:
-        name: '{{.name}}'
+        name: '{{name}}'
         namespace: 'argocd'
       syncPolicy:
         automated:
