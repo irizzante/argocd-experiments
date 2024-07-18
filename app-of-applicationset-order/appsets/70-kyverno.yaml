@@ -25,6 +25,13 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+          - Validate=false
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            maxDuration: 3m0s
+            factor: 2
       sources:
         - repoURL: https://github.com/irizzante/argocd-experiments.git
           targetRevision: '{{.metadata.annotations.addons_repo_revision}}'
