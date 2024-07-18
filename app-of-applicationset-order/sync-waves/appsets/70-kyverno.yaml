@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kyverno
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-70'
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - clusters: {}
+  template:
+    metadata:
+      name: 'addon-{{.name}}-kyverno'
+    spec:
+      project: default
+      destination:
+        name: '{{.name}}'
+        namespace: 'kyverno'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+      sources:
+        - repoURL: https://github.com/irizzante/argocd-experiments.git
+          targetRevision: '{{.metadata.annotations.addons_repo_revision}}'
+          ref: values
+        - repoURL: 'https://kyverno.github.io/kyverno'
+          chart: 'kyverno'
+          targetRevision: '2.7.0'
+          helm:
+            releaseName: 'kyverno'
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/app-of-applicationset-deletion/values.yaml
