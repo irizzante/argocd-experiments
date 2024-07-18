@@ -58,7 +58,7 @@ kubectl wait --for condition=ready pod --namespace kube-system --all --timeout 3
 
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
-helm upgrade --install argocd --wait -n argocd --create-namespace argo/argo-cd
+helm upgrade --install argocd -f argocd/values.yaml --wait -n argocd --create-namespace argo/argo-cd
 
 echo ArgoCD initial password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
