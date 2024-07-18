@@ -39,7 +39,8 @@ spec:
         - repoURL: 'https://kubernetes.github.io/ingress-nginx'
           chart: 'ingress-nginx'
           targetRevision: '4.11.0'
-          values: |
-            controller:
-              service:
-                type: ClusterIP
+          helm:
+            values: |
+              controller:
+                service:
+                  type: ClusterIP
